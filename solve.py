@@ -1,45 +1,41 @@
 import base64
-from Crypto.Cipher import AES
+import subprocess
 
-def pad(message):
-    if len(message) % 16 != 0:
-        message = message + '0' * (16 - len(message) % 16)  #block-size = 16
-    return message
+# Connect to the server and read the output directly
+def get_cipher(payload):
+    result = subprocess.run(f'echo {payload} | nc localhost 9999', capture_output=True, text=True, shell=True)
+    output = result.stdout.strip().split('\n')
+    line = output[-1] if len(output) > 1 else ''
+    words = line.split(': ')
+    cipher_base64 = words[-1] if len(words) > 1 else ''
+    #print(f"Payload: {payload}, Cipher: {cipher_base64}")
+    cipher_bytes = base64.b64decode(cipher_base64)
+    return cipher_bytes
 
-def encrypt(key, plain):
-    cipher = AES.new(key, AES.MODE_ECB)
-    return cipher.encrypt(plain)
+def bruteforce():
+    flag = ''
+    total = 16 - 1
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-~!?#%&@{}'
 
-def get_ciphertext(sitrep):
-    message = '''sixteen byte AES{sitrep}{secret_code}'''.format(sitrep=sitrep, secret_code="FLAG{dummy_flag}")  # Fake flag for testing
-    message = pad(message)
-    message1 = bytes(message, 'utf-8')
-    cipher = encrypt(b'sixteen byte key', message1)
-    return base64.b64encode(cipher).decode('ascii')
-
-# Given ciphertext for empty input
-target_cipher = "xX+NDjg0X9tmJLobdQv9k3p8OAaf7GXlB81oPjRoqhA="
-cipher_for_16A = "xX+NDjg0X9tmJLobdQv9k9VR6ytFTCy5JN+wlNbxGzR6fDgGn+xl5QfNaD40aKoQ"
-
-# Step 1: Find block size (We assume it's 16 bytes from AES)
-block_size = 16
-
-# Step 2: Generate padding to shift flag into a known position
-known_part = ""
-while True:
-    pad_length = block_size - (len(known_part) % block_size) - 1
-    pad_input = "A" * pad_length
-    cipher_base = get_ciphertext(pad_input)
-
-    if cipher_base[:24] == target_cipher[:24]:  # Compare first encrypted blocks
-        for c in range(32, 127):  # ASCII printable range
-            test_input = pad_input + known_part + chr(c)
-            cipher_test = get_ciphertext(test_input)
-            if cipher_test[:24] == target_cipher[:24]:  # Compare matching blocks
-                known_part += chr(c)
-                print(f"Recovered so far: {known_part}")
+    while True:
+        payload = '1' * (total - len(flag))
+        
+        cipher_target = get_cipher(payload)
+        #print(f"len(cipher_target): {len(cipher_target)}")
+        for char in chars:
+            payload = '1' * (total - len(flag)) + flag + char
+            cipher = get_cipher(payload)
+            #print(f"block_target: {cipher_target[32:64]}, block: {cipher[32:64]}")
+            if cipher[32:64] == cipher_target[32:64]:
+                flag += char
                 break
-        else:
-            break  # Stop if no match found (flag fully recovered)
 
-print(f"Final Flag: {known_part}")
+        print(f"Current flag: {flag}")
+
+        if len(flag) == 0:
+            break
+
+        if len(flag) == total:
+            break
+
+bruteforce()
