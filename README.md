@@ -49,6 +49,7 @@ and now we can input 15 '**1**'s + **one character**. We try every character and
 111111111111111c
 etc.
 ```
+```
 python3 ./solve.py 
 Current flag: <
 Current flag: <f
