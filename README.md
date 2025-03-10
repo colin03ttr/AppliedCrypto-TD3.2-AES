@@ -49,6 +49,10 @@ and now we can input 15 '**1**'s + **one character**. We try every character and
 111111111111111c
 etc.
 ```
+
+I wrote the exploit in Python in the [solve.py](./solve.py) file
+
+Here is the result output :
 ```
 python3 ./solve.py 
 Current flag: <
@@ -67,11 +71,6 @@ Current flag: <flag>0000000
 Current flag: <flag>00000000
 Current flag: <flag>000000000
 ```
-I wrote the exploit in Python in the [solve.py](./solve.py) file
-
-Here is the result output :
-```
-
 ----
 
 I also used [this](https://exploit-notes.hdks.org/exploit/cryptography/algorithm/aes-ecb-padding-attack/) article/writeups to learn on AES ECB attack byte-a-time.
